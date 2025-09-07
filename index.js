@@ -18,19 +18,41 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
     renderizaResultado("horn", "", true);
 
     // FNC
+    // Fórmula original
     renderizaResultado("fnc", formula);
-    let formula_fnc = eliminaImplicacao(formula);
-    while (formula_fnc != null){
-        renderizaResultado("fnc", formula_fnc)
-        formula_fnc = eliminaImplicacao(formula_fnc)
+
+    let fnc_formula = formula
+    let fnd_formula = formula
+
+    // Eliminando as bi-implicações
+    let formula_temp = eliminaBiImplicacao(fnc_formula);
+    while (formula_temp != null) {
+        fnc_formula = formula_temp;
+        renderizaResultado("fnc", fnc_formula);
+        formula_temp = eliminaBiImplicacao(fnc_formula);
+    }
+    // Eliminando as implicações
+    formula_temp = eliminaImplicacao(fnc_formula);
+    while (formula_temp != null) {
+        fnc_formula = formula_temp;
+        renderizaResultado("fnc", fnc_formula);
+        formula_temp = eliminaImplicacao(fnc_formula);
     }
 
     // FND
     renderizaResultado("fnd", formula);
-    let formula_fnd = eliminaImplicacao(formula);
-    while (formula_fnd != null){
-        renderizaResultado("fnd", formula_fnd)
-        formula_fnd = eliminaImplicacao(formula_fnd)
+    formula_temp = eliminaBiImplicacao(fnd_formula);
+    while (formula_temp != null) {
+        fnd_formula = formula_temp;
+        renderizaResultado("fnd", fnd_formula);
+        formula_temp = eliminaBiImplicacao(fnd_formula);
+    }
+    // Eliminando as implicações
+    formula_temp = eliminaImplicacao(fnd_formula);
+    while (formula_temp != null) {
+        fnd_formula = formula_temp;
+        renderizaResultado("fnd", fnd_formula);
+        formula_temp = eliminaImplicacao(fnd_formula);
     }
 
     renderizaResultado("clausal", formula);
@@ -56,7 +78,7 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
                     .replace(/\\Big\(/g, " (")
                     .replace(/\\big\)/g, " )")
                     .replace(/\\Big\)/g, " )")
-    //Tira espaços entre quantificadores e predicatos]
+    //Tira espaços entre quantificadores e predicatos
     formula = formula.replace(/\\(forall|exists)\s*(\w)\s*/g, "\\$1 $2");
     //Acha a implicação se ela existe e garda a posição
     let pos_implicacao;
@@ -140,5 +162,92 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
  }
 
  function eliminaBiImplicacao(formula){
-    
- }
+    //Remove comandos \big, \Big, \left, \right antes de processar
+    formula = formula.replace(/\\left\(/g, " (")
+                    .replace(/\\right\)/g, " )")
+                    .replace(/\\big\(/g, " (")
+                    .replace(/\\Big\(/g, " (")
+                    .replace(/\\big\)/g, " )")
+                    .replace(/\\Big\)/g, " )");
+
+    //Tira espaços entre quantificadores e predicatos
+    formula = formula.replace(/\\(forall|exists)\s*(\w)\s*/g, "\\$1 $2");
+
+    //Acha a bi-implicação se existe
+    let pos_bi;
+    let tam_bi;
+    if (formula.includes("\\leftrightarrow")) {
+        pos_bi = formula.indexOf("\\leftrightarrow");
+        tam_bi = 15;
+    } else if (formula.includes("\\iff")) {
+        pos_bi = formula.indexOf("\\iff");
+        tam_bi = 4;
+    } else {
+        console.log("Não possui bi-implicação");
+        return null;
+    }
+
+    // === Encontrar B (parte da direita) ===
+    let cont = 0;
+    let b_tem_par = false;
+    let pos_final_b = pos_bi;
+    for (let i = pos_bi; i < formula.length; i++){
+        if(formula[i] == "(") {
+            b_tem_par = true; 
+            cont++; 
+        }
+        else if(formula[i] == ")") {
+            cont--;
+            if (cont == 0) {
+                pos_final_b = i + 1;
+                break;
+            }
+        }
+    }
+    if (!b_tem_par) {
+        pos_final_b = formula.length;
+    }
+    // === Encontrar A (parte da esquerda) ===
+    cont = 0;
+    let a_tem_par = false;
+    let pos_inicio_a = pos_bi;
+    for (let i = pos_bi; i >= 0; i--){
+        if(formula[i] == ")"){ 
+            a_tem_par = true;
+            cont++;  
+        }
+        else if(formula[i] == "("){
+            cont--;
+            if (cont == 0){
+                pos_inicio_a = i;
+                if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(formula[pos_inicio_a - 1])){
+                    pos_inicio_a = i - 1;
+                }
+                while ((formula.substring(pos_inicio_a - 9, pos_inicio_a - 2) === "\\exists") || 
+                       (formula.substring(pos_inicio_a - 9, pos_inicio_a - 2) === "\\forall")){
+                    pos_inicio_a -= 9;
+                }
+                break;
+            }
+        }
+    }
+
+    if (!a_tem_par) {
+        pos_inicio_a = 0;
+    }
+
+    // Define A e B
+    let A = formula.substring(pos_inicio_a, pos_bi).trim();
+    let B = formula.substring(pos_bi + tam_bi, pos_final_b).trim();
+
+    let C = formula.substring(pos_inicio_a, pos_bi).trim();
+    let D = formula.substring(pos_bi + tam_bi, pos_final_b).trim();
+
+    let antes = formula.substring(0, pos_inicio_a);
+    let depois = formula.substring(pos_final_b);
+
+    // Substitui por (A -> B) ∧ (B -> A)
+    let sem_bi = `${antes}(\\lnot ${A} \\lor ${B}) \\land (\\lnot ${D} \\lor ${C})${depois}`;
+
+    return sem_bi;
+}
