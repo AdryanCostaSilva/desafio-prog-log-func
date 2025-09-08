@@ -72,6 +72,9 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
     }
 
     fnc_formula = renomeiaVariaveis(fnc_formula);
+    renderizaResultado("fnc", fnc_formula);
+
+    fnc_formula = prenexa(fnc_formula);
     renderizaResultado("fnc", fnc_formula)
 
     // FND
@@ -125,6 +128,9 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
     fnd_formula = renomeiaVariaveis(fnd_formula);
     renderizaResultado("fnd", fnd_formula)
 
+    fnc_formula = prenexa(fnc_formula);
+    renderizaResultado("fnd", fnc_formula)
+
     renderizaResultado("clausal", formula);
     renderizaResultado("horn", formula);
 
@@ -160,7 +166,6 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
         pos_implicacao = formula.indexOf("\\implies");
         tam_implicacao = 8
     } else {
-        console.log("Não possui implicação");
         return null;
     }
 
@@ -253,7 +258,6 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
         pos_bi = formula.indexOf("\\iff");
         tam_bi = 4;
     } else {
-        console.log("Não possui bi-implicação");
         return null;
     }
 
@@ -313,7 +317,7 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
     let antes = formula.substring(0, pos_inicio_a);
     let depois = formula.substring(pos_final_b);
 
-    // Substitui por ((A -> B) ∧ (B -> A))
+    // Substitui por ((A e B) ou (¬B e ¬A))
     let sem_bi = `${antes}((${A} \\land ${B}) \\lor (\\lnot ${A} \\land \\lnot ${B}))${depois}`;
 
     return sem_bi;
@@ -561,4 +565,27 @@ function renomeiaVariaveis(formula) {
     }
     
     return formula_atual;
+}
+
+function prenexa(formula){
+    let quantificadores = [];
+
+    // Pega todos os quantificadores coloca em um array e tira eles da formula
+    for (let i = 0; i < formula.length; i++){
+        if ((formula.substring(i, i + 8) == "\\exists ") || (formula.substring(i, i + 8) == "\\forall ")){
+            quantificadores.push(formula.substring(i, i + 9));
+            let antes = formula.substring(0, i);
+            let depois = formula.substring(i + 9);
+
+            formula = `${antes}${depois}`;
+            i--;
+        }
+    }
+
+    // Coloca os quantificadores no começo da formula na ordem correta
+    for (let i = quantificadores.length - 1; i >= 0; i--){
+        let quantificador = quantificadores[i];
+        formula = `${quantificador}${formula}`;
+    }
+    return formula;
 }
