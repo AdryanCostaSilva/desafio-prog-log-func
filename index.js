@@ -17,26 +17,33 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
     renderizaResultado("clausal", "", true);
     renderizaResultado("horn", "", true);
 
-    // FNC
-    // Fórmula original
+    // Renderizando a Fórmula original em cada bloco
     renderizaResultado("fnc", formula);
+    renderizaResultado("fnd", formula);
+    renderizaResultado("clausal", formula);
+    renderizaResultado("horn", formula);
+    //Forma Prenex
+    let prenex_formula = formula;
 
-    let fnc_formula = formula
-    let fnd_formula = formula
-
-    // Eliminando as bi-implicações
-    let formula_temp = eliminaBiImplicacao(fnc_formula);
+    // Eliminando bi-implicacoes
+    let formula_temp = eliminaBiImplicacao(prenex_formula);
     while (formula_temp != null) {
-        fnc_formula = formula_temp;
-        renderizaResultado("fnc", fnc_formula);
-        formula_temp = eliminaBiImplicacao(fnc_formula);
+        prenex_formula = formula_temp;
+        renderizaResultado("fnc", prenex_formula);
+        renderizaResultado("fnd", prenex_formula);
+        renderizaResultado("clausal", prenex_formula);
+        renderizaResultado("horn", prenex_formula);
+        formula_temp = eliminaBiImplicacao(prenex_formula);
     }
     // Eliminando as implicações
-    formula_temp = eliminaImplicacao(fnc_formula);
+    formula_temp = eliminaImplicacao(prenex_formula);
     while (formula_temp != null) {
-        fnc_formula = formula_temp;
-        renderizaResultado("fnc", fnc_formula);
-        formula_temp = eliminaImplicacao(fnc_formula);
+        prenex_formula = formula_temp;
+        renderizaResultado("fnc", prenex_formula);
+        renderizaResultado("fnd", prenex_formula);
+        renderizaResultado("clausal", prenex_formula);
+        renderizaResultado("horn", prenex_formula);
+        formula_temp = eliminaImplicacao(prenex_formula);
     }
 
     let mudou = true;
@@ -44,105 +51,100 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
         mudou = false;
 
         // 1. De Morgan
-        let formula_temp = aplicaDeMorgan(fnc_formula);
+        let formula_temp = aplicaDeMorgan(prenex_formula);
         while (formula_temp != null) {
-            fnc_formula = formula_temp;
-            renderizaResultado("fnc", fnc_formula);
-            formula_temp = aplicaDeMorgan(fnc_formula);
+            prenex_formula = formula_temp;
+            renderizaResultado("fnc", prenex_formula);
+            renderizaResultado("fnd", prenex_formula);
+            renderizaResultado("clausal", prenex_formula);
+            renderizaResultado("horn", prenex_formula);
+            formula_temp = aplicaDeMorgan(prenex_formula);
             mudou = true;
         }
 
         // 2. Negação de quantificadores
-        formula_temp = revomeNegacaoQuantificador(fnc_formula);
+        formula_temp = revomeNegacaoQuantificador(prenex_formula);
         while (formula_temp != null) {
-            fnc_formula = formula_temp;
-            renderizaResultado("fnc", fnc_formula);
-            formula_temp = revomeNegacaoQuantificador(fnc_formula);
+            prenex_formula = formula_temp;
+            renderizaResultado("fnc", prenex_formula);
+            renderizaResultado("fnd", prenex_formula);
+            renderizaResultado("clausal", prenex_formula);
+            renderizaResultado("horn", prenex_formula);
+            formula_temp = revomeNegacaoQuantificador(prenex_formula);
             mudou = true;
         }
 
         // 3. Dupla negação
-        formula_temp = removeDuplaNegacao(fnc_formula);
+        formula_temp = removeDuplaNegacao(prenex_formula);
         while (formula_temp != null) {
-            fnc_formula = formula_temp;
-            renderizaResultado("fnc", fnc_formula);
-            formula_temp = removeDuplaNegacao(fnc_formula);
+            prenex_formula = formula_temp;
+            renderizaResultado("fnc", prenex_formula);
+            renderizaResultado("fnd", prenex_formula);
+            renderizaResultado("clausal", prenex_formula);
+            renderizaResultado("horn", prenex_formula);
+            formula_temp = removeDuplaNegacao(prenex_formula);
             mudou = true;
         }
     }
 
-    fnc_formula = renomeiaVariaveis(fnc_formula);
+    // Renomeando variaveis iguais de quantificadores diferentes
+    prenex_formula = renomeiaVariaveis(prenex_formula);
+    renderizaResultado("fnc", prenex_formula);
+    renderizaResultado("fnd", prenex_formula);
+    renderizaResultado("clausal", prenex_formula);
+    renderizaResultado("horn", prenex_formula);
+
+    //Colocando todos os quantificadores no inicio da fórmula
+    prenex_formula = prenexa(prenex_formula);
+    renderizaResultado("fnc", prenex_formula);
+    renderizaResultado("fnd", prenex_formula);
+    renderizaResultado("clausal", prenex_formula);
+    renderizaResultado("horn", prenex_formula);
+
+    // FNC
+    // Tranformando formula prenex em fnc (passa prenex como parametro para a primeira variavel de fnc_formula)
+    let fnc_formula = analisaFormula(prenex_formula);
+    fnc_formula = converteParaFnc(fnc_formula);
+    fnc_formula = astParaLatex(fnc_formula);
+    renderizaResultado("fnc", fnc_formula);
+    renderizaResultado("fnc", `\\text{Forma Normal Conjuntiva}`);
     renderizaResultado("fnc", fnc_formula);
 
-    fnc_formula = prenexa(fnc_formula);
-    renderizaResultado("fnc", fnc_formula)
-
     // FND
-    renderizaResultado("fnd", formula);
-    formula_temp = eliminaBiImplicacao(fnd_formula);
-    while (formula_temp != null) {
-        fnd_formula = formula_temp;
-        renderizaResultado("fnd", fnd_formula);
-        formula_temp = eliminaBiImplicacao(fnd_formula);
+    // Tranformando formula prenex em fnd (passa prenex como parametro para a primeira variavel de fnd_formula)
+    let fnd_formula = analisaFormula(prenex_formula);
+    fnd_formula = converteParaFnd(fnd_formula);
+    fnd_formula = astParaLatex(fnd_formula);
+    renderizaResultado("fnd", fnd_formula);
+    renderizaResultado("fnd", `\\text{Forma Normal Disjuntiva}`);
+    renderizaResultado("fnd", fnd_formula);
+
+    // Forma Clausal
+    let clausal_formula = analisaFormula(prenex_formula);
+    clausal_formula = skolemiza(clausal_formula);
+    clausal_formula = removerQuantificadoresUniversais(clausal_formula);
+    clausal_formula = converteParaFnc(clausal_formula);
+    clausal_formula = astParaLatex(clausal_formula);
+    renderizaResultado("clausal", clausal_formula);
+    renderizaResultado("clausal", `\\text{Forma Clausal}`);
+    renderizaResultado("clausal", clausal_formula);
+
+    // Verificação Horn - analisa a fórmula FNC para determinar se é Horn
+    let horn_formula = analisaFormula(prenex_formula);
+    horn_formula = skolemiza(horn_formula);
+    horn_formula = removerQuantificadoresUniversais(horn_formula)
+    horn_formula = converteParaFnc(horn_formula);
+    horn_formula_latex = astParaLatex(horn_formula);
+    renderizaResultado("horn", horn_formula_latex);
+    const resultadoHorn = verificaHorn(horn_formula);
+
+    // Adiciona o resultado da análise Horn
+    if (resultadoHorn.isHorn) {
+        renderizaResultado("horn", `\\text{Clausula de Horn}`);
+        renderizaResultado("horn", horn_formula_latex);
+    } else {
+        renderizaResultado("horn", `\\text{Nao possui Clausula de Horn}`);
     }
-    // Eliminando as implicações
-    formula_temp = eliminaImplicacao(fnd_formula);
-    while (formula_temp != null) {
-        fnd_formula = formula_temp;
-        renderizaResultado("fnd", fnd_formula);
-        formula_temp = eliminaImplicacao(fnd_formula);
-    }
-
-    mudou = true;
-    while (mudou) {
-        mudou = false;
-
-        // 1. De Morgan
-        let formula_temp = aplicaDeMorgan(fnd_formula);
-        while (formula_temp != null) {
-            fnd_formula = formula_temp;
-            renderizaResultado("fnd", fnd_formula);
-            formula_temp = aplicaDeMorgan(fnd_formula);
-            mudou = true;
-        }
-
-        // 2. Negação de quantificadores
-        formula_temp = revomeNegacaoQuantificador(fnd_formula);
-        while (formula_temp != null) {
-            fnd_formula = formula_temp;
-            renderizaResultado("fnd", fnd_formula);
-            formula_temp = revomeNegacaoQuantificador(fnd_formula);
-            mudou = true;
-        }
-
-        // 3. Dupla negação
-        formula_temp = removeDuplaNegacao(fnd_formula);
-        while (formula_temp != null) {
-            fnd_formula = formula_temp;
-            renderizaResultado("fnd", fnd_formula);
-            formula_temp = removeDuplaNegacao(fnd_formula);
-            mudou = true;
-        }
-    }
-
-    fnd_formula = renomeiaVariaveis(fnd_formula);
-    renderizaResultado("fnd", fnd_formula)
-
-    fnc_formula = prenexa(fnc_formula);
-    renderizaResultado("fnd", fnc_formula)
-
-    renderizaResultado("clausal", formula);
-    renderizaResultado("horn", formula);
-
-    //Testes
-
-    //(\forall x (A(x) \to E(x))) \lor (\exists y (P(y) \land M(y))
-    //(\exists x(A(x) \land E(x))) \land (\forall y (P(y) \to N(y)))
-    //(\forall x(E(x) \to I(x))) \lor (\exists y(P(y) \land S(y)))
-    //(\forall x(A(x) \to C(x))) \lor (\exists y(P(y) \land V(y))) 
-    //\lnot (\forall x (P(x) \to \exists yQ(x,y)) \leftrightarrow \exists zR(z))
-    //(\exists xP(x) \to \forall yQ(y)) \land (\exists zR(z) \to \forall wS(w))
-    //(\forall x(P(x) \to \exists yS(x, y))) \to (\lnot\forall z(P(z) \to D(z)))
 
  });
 
@@ -188,8 +190,18 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
     }
     
     // Verifica se tem parenteses para formulas sem parenteses por exemplo P \to Q
-    if (!b_possui_parenteses){
-        pos_final_b = formula.length;
+    if (!b_possui_parenteses || cont_chaves != 0) {
+        // Primeiro, verifica se a implicação está dentro de parênteses
+        for (let i = pos_implicacao + tam_implicacao; i < formula.length; i++){
+            if (formula[i] == ")") {
+                pos_final_b = i - 1;
+                break;
+            }
+            if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(formula[i])) {
+                pos_final_b = i + 1; // +1 para slice exclusivo
+                break;
+            }
+        }
     }
 
     //Acha o objeto A entre ()
@@ -205,24 +217,35 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
             if (cont_chaves == 0){
                 pos_inicio_a = i;
                 
-                //Verifica se há um predicato uma no inicio de A
-                if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(formula[pos_inicio_a - 1])){
-                    pos_inicio_a = i - 1;
+                //Verifica se há um predicado completo antes
+                let depois = formula.substring(0, pos_inicio_a);
+                let predicatoMatch = depois.match(/([A-Z][a-zA-Z0-9_]*(?:\([^)]*\))?)$/);
+                if (predicatoMatch) {
+                    pos_inicio_a = pos_inicio_a - predicatoMatch[1].length;
                 }
                 
                 //Se houver quantificadores pula, para colocar negação na frente
                 while ((formula.substring(pos_inicio_a - 9, pos_inicio_a - 2) === "\\exists") || (formula.substring(pos_inicio_a - 9, pos_inicio_a -2) === "\\forall")){
                     pos_inicio_a -= 9;
                 }
-
                 break;
             }
         }
     }
-    //Verifica se há parenteses para casos de predicatos sem variaveis
-    if (!a_possui_parenteses){
-        pos_inicio_a = 0;
+    if (!a_possui_parenteses || cont_chaves != 0) {
+        // Primeiro, verifica se a implicação está dentro de parênteses
+        for (let i = pos_implicacao - 1; i >= 0; i--){
+            if (formula[i] == "("){
+                pos_inicio_a = i;
+                break;
+            }
+            if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(formula[i])) {
+                pos_inicio_a = i;
+                break;
+            }
+        }
     }
+
 
     //Define A e B, nega A e troca a implicacao por disjunção
     let A = formula.substring(pos_inicio_a, pos_implicacao).trim();
@@ -278,9 +301,21 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
             }
         }
     }
-    if (!b_tem_par) {
-        pos_final_b = formula.length;
+
+    if (!b_tem_par || cont_chaves != 0) {
+        // Caso B sem parênteses ou desequilibrado
+        for (let i = pos_bi + 1; i < formula.length; i++){
+            if (formula[i] == ")") { 
+                pos_final_b = i; 
+                break; 
+            }
+            if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(formula[i])) {
+                pos_final_b = i + 1;
+                break;
+            }
+        }
     }
+
     // Encontra A
     cont_chaves = 0;
     let a_tem_par = false;
@@ -294,8 +329,11 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
             cont_chaves--;
             if (cont_chaves == 0){
                 pos_inicio_a = i;
-                if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(formula[pos_inicio_a - 1])){
-                    pos_inicio_a = i - 1;
+                //Verifica se há um predicado completo antes
+                let depois = formula.substring(0, pos_inicio_a);
+                let predicatoMatch = depois.match(/([A-Z][a-zA-Z0-9_]*(?:\([^)]*\))?)$/);
+                if (predicatoMatch) {
+                    pos_inicio_a = pos_inicio_a - predicatoMatch[1].length;
                 }
                 while ((formula.substring(pos_inicio_a - 9, pos_inicio_a - 2) === "\\exists") || 
                        (formula.substring(pos_inicio_a - 9, pos_inicio_a - 2) === "\\forall")){
@@ -306,8 +344,18 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
         }
     }
 
-    if (!a_tem_par) {
-        pos_inicio_a = 0;
+    if (!a_tem_par || cont_chaves != 0) {
+        // Caso A sem parênteses ou desequilibrado
+        for (let i = pos_bi - 1; i >= 0; i--){
+            if (formula[i] == "("){
+                pos_inicio_a = i;
+                break;
+            }
+            if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(formula[i])){
+                pos_inicio_a = i;
+                break;
+            }
+        }
     }
 
     // Define A e B
@@ -325,7 +373,7 @@ document.getElementById("formulaForm").addEventListener("submit", function(e){
 
 function revomeNegacaoQuantificador(formula){
     let regex_quan;
-    //Regex para encontrar quantificadores existenciais
+    //Regex para encontrar quantificadores universais
     regex_quan = formula.match(/\\lnot\s*\\forall\s+(\w)\s*(.*)/);
     if (regex_quan) {
         let variavel = regex_quan[1];
@@ -333,7 +381,7 @@ function revomeNegacaoQuantificador(formula){
         return formula.replace(regex_quan[0], `\\exists ${variavel} \\lnot ${predicado}`);
     }
 
-    //Regex para encontrar quantificadores universais
+    //Regex para encontrar quantificadores existenciais
     regex_quan = formula.match(/\\lnot\s*\\exists\s+(\w)\s*(.*)/);
     if (regex_quan) {
         let variavel = regex_quan[1];
@@ -504,7 +552,7 @@ function renomeiaVariaveis(formula) {
         
         for (let i = 0; i < quantificadores.length; i++) {
             const quant = quantificadores[i];
-            
+            // Se a váriavel já foi utilizada antes adiciona, adiciona a lista de conflitos
             if (variaveis_vistas.has(quant.variavel)) {
                 conflitos.push({
                     indice: i,
@@ -588,4 +636,500 @@ function prenexa(formula){
         formula = `${quantificador}${formula}`;
     }
     return formula;
+}
+
+// A classe Node representa cada nó na árvore sintatica (P,Q, not, and, or, forall, exists)
+class Node {
+    constructor(tipo, valor = null, filhos = []) {
+        this.tipo = tipo;       
+        this.valor = valor;     
+        this.filhos = filhos;  
+    }
+}
+
+// 2️⃣ Parser LaTeX -> AST com 
+function analisaFormula(formula_str) {
+    formula_str = formula_str.trim();
+
+    // Extraindo os quantificadores do inicio
+    const quantificadores = [];
+    let regexQuant = /^\\(exists|forall) (\w+)/i;
+    let match;
+    while ((match = formula_str.match(regexQuant))) {
+        quantificadores.push({ tipo: match[1].toUpperCase(), var: match[2] });
+        formula_str = formula_str.slice(match[0].length).trim();
+    }
+
+    // De forma recursiva encontra elementos na fórmula e cria um nó para ele
+    function analisaExpr(expr) {
+        expr = expr.trim();
+
+        // NOT
+        if (expr.startsWith("\\lnot ")) {
+            return new Node("NOT", null, [analisaExpr(expr.slice(6))]);
+        }
+
+        // Remover parênteses externos redundantes
+        expr = removerParenteses(expr);
+
+        let count = 0;
+        for (let i = 0; i < expr.length; i++) {
+            if (expr[i] === "(") count++;
+            else if (expr[i] === ")") count--;
+            else if (count === 0) {
+                // AND
+                if (expr.slice(i, i+6) === "\\land ") {
+                    return new Node("AND", null, [analisaExpr(expr.slice(0,i).trim()), analisaExpr(expr.slice(i+6).trim())]);
+                }
+                // OR
+                if (expr.slice(i, i+5) === "\\lor ") {
+                    return new Node("OR", null, [analisaExpr(expr.slice(0,i).trim()), analisaExpr(expr.slice(i+5).trim())]);
+                }
+            }
+        }
+
+        // Literal
+        return new Node("LITERAL", expr);
+    }
+
+
+    let astMatriz = analisaExpr(formula_str);
+
+    for (let i = quantificadores.length - 1; i >= 0; i--) {
+        astMatriz = new Node(quantificadores[i].tipo, quantificadores[i].var, [astMatriz]);
+    }
+
+    return astMatriz;
+}
+
+// Distribui as conjunções para transformar em FNC
+function converteParaFnc(no) {
+    if (!no) {
+        return null;
+    }
+
+    if (no.tipo === "LITERAL") {
+        return no;
+    }
+
+    if (no.tipo === "NOT") {
+        return new Node("NOT", null, [converteParaFnc(no.filhos[0])]);
+    }
+
+    // Se for um AND, já está na forma correta
+    if (no.tipo === "AND") {
+        const esquerdo = converteParaFnc(no.filhos[0]);
+        const direito = converteParaFnc(no.filhos[1]);
+        return new Node("AND", null, [esquerdo, direito]);
+    }
+
+    if (no.tipo === "OR") {
+        const esquerdo = converteParaFnc(no.filhos[0]);
+        const direito = converteParaFnc(no.filhos[1]);
+
+        // Se for uma disjunção de conjunções aplica a distribuição -> (A ou C) e (A ou D) e (B ou C) e (B ou D) 
+        if (esquerdo.tipo === "AND" && direito.tipo === "AND") {
+            const [A,B] = esquerdo.filhos;
+            const [C,D] = direito.filhos;
+            return new Node("AND", null, [
+                new Node("AND", null, [new Node("OR", null, [A,C]), new Node("OR", null, [A,D])]),
+                new Node("AND", null, [new Node("OR", null, [B,C]), new Node("OR", null, [B,D])])
+            ]);
+        } 
+        // Se apenas o lado esquerdo é AND aplica distribuição -> (A ou C) e (B ou C)
+        else if (esquerdo.tipo === "AND") {
+            const [A,B] = esquerdo.filhos;
+            return new Node("AND", null, [new Node("OR", null, [A,direito]), new Node("OR", null, [B,direito])]);
+        } 
+        // Se apenas o lado direito é AND aplica distribuição -> (A ou C) e (A ou D)
+        else if (direito.tipo === "AND") {
+            const [C,D] = direito.filhos;
+            return new Node("AND", null, [new Node("OR", null, [esquerdo,C]), new Node("OR", null, [esquerdo,D])]);
+        } 
+        // Se nenhum dos lados é AND então já está na forma certa
+        else {
+            return new Node("OR", null, [esquerdo,direito]);
+        }
+    }
+
+    if (no.tipo === "EXISTS" || no.tipo === "FORALL") {
+        return new Node(no.tipo, no.valor, [converteParaFnc(no.filhos[0])]);
+    }
+
+    return no;
+}
+
+// Distribui as disjunções para transformar em FND
+function converteParaFnd(no) {
+    if (!no) {
+        return null;
+    };
+
+    if (no.tipo === "LITERAL") {
+        return no;
+    }
+
+    if (no.tipo === "NOT") {
+        return new Node("NOT", null, [converteParaFnd(no.filhos[0])]);
+    }
+
+    // Se for OR então já está na forma correta
+    if (no.tipo === "OR") {
+        const esquerdo = converteParaFnd(no.filhos[0]);
+        const direito = converteParaFnd(no.filhos[1]);
+        return new Node("OR", null, [esquerdo, direito]);
+    }
+
+
+    if (no.tipo === "AND") {
+        const esquerdo = converteParaFnd(no.filhos[0]);
+        const direito = converteParaFnd(no.filhos[1]);
+
+        // Se ambos os lados são OR, aplica distributividade -> (A e C) ou (A e D) ou (B e C) ou ( B e D)
+        if (esquerdo.tipo === "OR" && direito.tipo === "OR") {
+            const [A,B] = esquerdo.filhos;
+            const [C,D] = direito.filhos;
+            return new Node("OR", null, [
+                new Node("OR", null, [new Node("AND", null, [A,C]), new Node("AND", null, [A,D])]),
+                new Node("OR", null, [new Node("AND", null, [B,C]), new Node("AND", null, [B,D])])
+            ]);
+        } 
+        // Se só o lado esquedo é OR, aplica distributividade (A e C) ou (B e C)
+        else if (esquerdo.tipo === "OR") {
+            const [A,B] = esquerdo.filhos;
+            return new Node("OR", null, [new Node("AND", null, [A,direito]), new Node("AND", null, [B,direito])]);
+        } 
+        // Se só o lado direito é OR, aplica distributividade (A e C) ou (A e D)
+        else if (direito.tipo === "OR") {
+            const [C,D] = direito.filhos;
+            return new Node("OR", null, [new Node("AND", null, [esquerdo,C]), new Node("AND", null, [esquerdo,D])]);
+        } 
+        // Se nenhum dos lados são OR, então já está na forma certa
+        else {
+            return new Node("AND", null, [esquerdo,direito]);
+        }
+    }
+
+    if (no.tipo === "EXISTS" || no.tipo === "FORALL") {
+        return new Node(no.tipo, no.valor, [converteParaFnd(no.filhos[0])]);
+    }
+
+    return no;
+}
+
+// Remove parenteses redundantes na formula
+function removerParenteses(formula) {
+    formula = formula.trim();
+    while (formula.startsWith("(") && formula.endsWith(")")) {
+        let count = 0;
+        let valido = true;
+        // Verifica se parenteses externos englobam toda a formula
+        for (let i = 0; i < formula.length; i++) {
+            if (formula[i] === "(") count++;
+            else if (formula[i] === ")") count--;
+            // Se fecha antes do fim, não engloba tudo
+            if (count === 0 && i < formula.length - 1) {
+                valido = false;
+                break;
+            }
+        }
+        if (valido) {
+            formula = formula.slice(1, -1).trim();
+        } else {
+            break;
+        }
+    }
+    return formula;
+}
+
+// Converte os termos das operações OR em uma lista de termos
+function coletarOr(node, termos = []) {
+    if (!node) {
+        return termos;
+    }
+    if (node.tipo === "OR") {
+        // se tiver filhos aninhados pega recursivamente
+        coletarOr(node.filhos[0], termos);
+        coletarOr(node.filhos[1], termos);
+    } else {
+        termos.push(node);
+    }
+    return termos;
+}
+
+// Converte os termos das operações AND em uma lista de termos
+function coletarAnd(node, termos = []) {
+    if (!node){
+        return termos;
+    }
+    if (node.tipo === "AND") {
+        // se tiver filhos aninhados pega recursivamente
+        coletarAnd(node.filhos[0], termos);
+        coletarAnd(node.filhos[1], termos);
+    } else {
+        termos.push(node);
+    }
+    return termos;
+}
+
+// Converte a árvore sintática em Latex para poder redenrizar 
+function astParaLatex(no) {
+    if (!no) {
+        return "";
+    }
+
+    switch(no.tipo) {
+        case "LITERAL":
+            return no.valor;
+        case "NOT":
+            const subformula = astParaLatex(no.filhos[0]);
+            if (no.filhos[0].tipo === "AND" || no.filhos[0].tipo === "OR") {
+                return `\\lnot (${subformula})`;
+            }
+            return `\\lnot ${subformula}`;
+        //Para cada nó da conjunção, converte para latex e adiciona parenteses se necessário
+        case "AND": {
+            const clausulas = coletarAnd(no).map(n => {
+                if (n.tipo === "OR" || n.tipo === "AND") {
+                    return `(${astParaLatex(n)})`;
+                }
+                return astParaLatex(n);
+            });
+            return `${clausulas.join(" \\land ")}`;
+        }
+        //Para cada nó da conjunção, converte para latex e adiciona parenteses se necessário
+        case "OR": {
+            const termos = coletarOr(no).map(n => {
+                if (n.tipo === "AND" || n.tipo === "OR") {
+                    return `(${astParaLatex(n)})`;
+                }
+                return astParaLatex(n);
+            });
+            return `${termos.join(" \\lor ")}`;
+        }
+        case "EXISTS":
+            const conteudoExists = astParaLatex(no.filhos[0]);
+            //Adiciona parenteses se operação composta
+            if (no.filhos[0].tipo === "AND" || no.filhos[0].tipo === "OR") {
+                return `\\exists ${no.valor} (${conteudoExists})`;
+            }
+            return `\\exists ${no.valor} ${conteudoExists}`;
+        case "FORALL":
+            const conteudoForall = astParaLatex(no.filhos[0]);
+            //Adiciona parenteses se operação composta
+            if (no.filhos[0].tipo === "AND" || no.filhos[0].tipo === "OR") {
+                return `\\forall ${no.valor} (${conteudoForall})`;
+            }
+            return `\\forall ${no.valor} ${conteudoForall}`;
+        default:
+            return "";
+    }
+}
+
+// Skolemização - Remove quantificadores existenciais substituindo por funções/constantes de Skolem
+function skolemiza(no, variaveisUniversais = [], contadorSkolem = { valor: 1 }) {
+    if (!no) {
+        return null;
+    }
+
+    switch (no.tipo) {
+        case "LITERAL":
+            return no;
+
+        case "NOT":
+            return new Node("NOT", null, [skolemiza(no.filhos[0], variaveisUniversais, contadorSkolem)]);
+        // Aplica skolemização em ambos os lados da conjunção
+        case "AND":
+            const esquerdoAnd = skolemiza(no.filhos[0], variaveisUniversais, contadorSkolem);
+            const direitoAnd = skolemiza(no.filhos[1], variaveisUniversais, contadorSkolem);
+            return new Node("AND", null, [esquerdoAnd, direitoAnd]);
+        // Aplica skolemização em ambos os lados da disjunção
+        case "OR":
+            const esquerdoOr = skolemiza(no.filhos[0], variaveisUniversais, contadorSkolem);
+            const direitoOr = skolemiza(no.filhos[1], variaveisUniversais, contadorSkolem);
+            return new Node("OR", null, [esquerdoOr, direitoOr]);
+
+        case "FORALL":
+            // Adiciona a variável universal ao escopo e continua recursivamente
+            const novasVariaveisUniversais = [...variaveisUniversais, no.valor];
+            return new Node("FORALL", no.valor, [
+                skolemiza(no.filhos[0], novasVariaveisUniversais, contadorSkolem)
+            ]);
+
+        case "EXISTS":
+            // Remove o quantificador existencial e substitui a variável
+            const varExistencial = no.valor;
+            let termoSkolem;
+
+            if (variaveisUniversais.length === 0) {
+                // Sem variáveis universais no escopo = usa constante de Skolem
+                termoSkolem = `c_{${contadorSkolem.valor}}`;
+            } else {
+                // Com variáveis universais no escopo = usa função de Skolem
+                const parametros = variaveisUniversais.join(',');
+                termoSkolem = `f_{${contadorSkolem.valor}}(${parametros})`;
+            }
+            
+            contadorSkolem.valor++;
+
+            // Aplica skolemização recursivamente na matriz e depois substitui
+            const matrizSkolemizada = skolemiza(no.filhos[0], variaveisUniversais, contadorSkolem);
+            return substituirVariavel(matrizSkolemizada, varExistencial, termoSkolem);
+
+        default:
+            return no;
+    }
+}
+
+// Função auxiliar para substituir uma variável por um termo em toda a fórmula
+function substituirVariavel(no, variavelOriginal, novoTermo) {
+    if (!no) {
+        return null;
+    }
+
+    switch (no.tipo) {
+        case "LITERAL":
+            // Substitui a variável no literal se necessário
+            return new Node("LITERAL", 
+                no.valor.replace(new RegExp(`\\b${variavelOriginal}\\b`, 'g'), novoTermo)
+            );
+
+        case "NOT":
+            return new Node("NOT", null, [
+                substituirVariavel(no.filhos[0], variavelOriginal, novoTermo)
+            ]);
+        // Aplica substituição em ambos os lados da conjunção
+        case "AND":
+            return new Node("AND", null, [
+                substituirVariavel(no.filhos[0], variavelOriginal, novoTermo),
+                substituirVariavel(no.filhos[1], variavelOriginal, novoTermo)
+            ]);
+        // Aplica substituição em ambos os lados da disjunção
+        case "OR":
+            return new Node("OR", null, [
+                substituirVariavel(no.filhos[0], variavelOriginal, novoTermo),
+                substituirVariavel(no.filhos[1], variavelOriginal, novoTermo)
+            ]);
+
+        case "FORALL":
+        case "EXISTS":
+            // Se a variável do quantificador é a mesma que estamos substituindo,
+            // não descemos na árvore (escopo local)
+            if (no.valor === variavelOriginal) {
+                return no;
+            }
+            // Se a variavel for diferente, continua
+            return new Node(no.tipo, no.valor, [
+                substituirVariavel(no.filhos[0], variavelOriginal, novoTermo)
+            ]);
+
+        default:
+            return no;
+    }
+}
+
+function removerQuantificadoresUniversais(no) {
+    if (!no) {
+        return null;
+    }
+
+    switch (no.tipo) {
+        case "FORALL":
+            // Remove o quantificador universal e retorna apenas a matriz
+            return removerQuantificadoresUniversais(no.filhos[0]);
+            
+        case "EXISTS":
+            // Não deveria haver EXISTS após skolemização, mas por segurança
+            return new Node("EXISTS", no.valor, [removerQuantificadoresUniversais(no.filhos[0])]);
+            
+        case "NOT":
+            return new Node("NOT", null, [removerQuantificadoresUniversais(no.filhos[0])]);
+        // Aplica remoção em ambos os lados da conjunção    
+        case "AND":
+            return new Node("AND", null, [
+                removerQuantificadoresUniversais(no.filhos[0]),
+                removerQuantificadoresUniversais(no.filhos[1])
+            ]);
+        // Aplica remoção em ambos os lados da disjunção
+        case "OR":
+            return new Node("OR", null, [
+                removerQuantificadoresUniversais(no.filhos[0]),
+                removerQuantificadoresUniversais(no.filhos[1])
+            ]);
+            
+        case "LITERAL":
+        default:
+            return no;
+    }
+}
+
+// Função para verificar se uma fórmula é Horn
+function verificaHorn(no) {
+    if (!no) {
+        return { isHorn: true };
+    }
+
+    // Se não for AND no topo, verificamos como cláusula única
+    if (no.tipo !== "AND") {
+        const literaisPositivos = contarLiteraisPositivos(no);
+        return { isHorn: literaisPositivos <= 1 };
+    }
+
+    // Verica cada clausula da conjuncao separadamente
+    const clausulas = coletarAnd(no);
+    
+    for (let i = 0; i < clausulas.length; i++) {
+        const clausula = clausulas[i];
+        const literaisPositivos = contarLiteraisPositivos(clausula);
+        
+        // Se alguma cláusula tem mais de 1 literal positivo, não é Horn
+        if (literaisPositivos > 1) {
+            return { isHorn: false };
+        }
+    }
+
+    // Se todas as cláusulas têm menos que 1, ou exatamente 1 literal positivo, é horn
+    return { isHorn: true };
+}
+
+// Função auxiliar que conta literais positivos em uma cláusula
+function contarLiteraisPositivos(no) {
+    if (!no) {
+        return 0;
+    }
+
+    switch (no.tipo) {
+        case "LITERAL":
+            // Verifica se é literal positivo ou negativo, se negativo retorna 0, se positivo retorna 1
+            if (no.valor.startsWith("\\lnot")) {
+                return 0;
+            }
+            return 1;
+
+        case "NOT":
+            // Se for um literal negado, retorna 0
+            if (no.filhos[0] && no.filhos[0].tipo === "LITERAL") {
+                return 0;
+            }
+            return contarLiteraisPositivos(no.filhos[0]);
+
+        case "OR":
+            // Soma os literais positivos de ambos os lados da disjunção
+            const esquerdoOr = contarLiteraisPositivos(no.filhos[0]);
+            const direitoOr = contarLiteraisPositivos(no.filhos[1]);
+            return esquerdoOr + direitoOr;
+
+        case "AND":
+            const esquerdoAnd = contarLiteraisPositivos(no.filhos[0]);
+            const direitoAnd = contarLiteraisPositivos(no.filhos[1]);
+            return esquerdoAnd + direitoAnd;
+
+        case "FORALL":
+        case "EXISTS":
+            // Não afeta na contagem de literais
+            return contarLiteraisPositivos(no.filhos[0]);
+
+        default:
+            return 0;
+    }
 }
